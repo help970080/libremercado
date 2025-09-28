@@ -1,0 +1,12 @@
+# dependencias
+node_modules/
+
+# build
+dist/
+
+# variables de entorno
+.env
+.env.*
+
+# otros
+.DS_Store
