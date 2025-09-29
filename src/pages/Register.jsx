@@ -1,52 +1,35 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
-  const handleRegister = async () => {
+  async function handleSubmit(e) {
+    e.preventDefault();
     try {
-      await api.post("/auth/register", { name, email, password });
-      alert("Usuario registrado, ahora inicia sesión");
-      navigate("/login");
-    } catch (err) {
-      alert(err.response?.data?.error || "Error al registrar");
+      const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Usuario registrado, ahora puedes iniciar sesión");
+      } else {
+        alert(data.error);
+      }
+    } catch {
+      alert("Error en registro");
     }
-  };
+  }
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Registrarse</h1>
-      <input
-        placeholder="Nombre"
-        className="border p-2 w-full mt-2"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        className="border p-2 w-full mt-2"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Contraseña"
-        className="border p-2 w-full mt-2"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button
-        onClick={handleRegister}
-        className="bg-green-600 text-white px-4 py-2 mt-4 rounded w-full"
-      >
-        Crear cuenta
-      </button>
-    </div>
+    <form onSubmit={handleSubmit} className="max-w-sm mx-auto p-4 bg-white shadow rounded grid gap-3">
+      <input className="border p-2 rounded" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required />
+      <input className="border p-2 rounded" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <input className="border p-2 rounded" type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      <button className="bg-purple-600 text-white p-2 rounded hover:bg-purple-700" type="submit">Crear cuenta</button>
+    </form>
   );
 }

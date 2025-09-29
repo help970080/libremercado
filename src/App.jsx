@@ -1,60 +1,29 @@
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 // ==========================
-// API client embebido (fetch)
+// API Client (igual que antes)
 // ==========================
-// Usa VITE_APP_API_BASE_URL si existe; si no, cae a localhost.
-const API_BASE = (import.meta?.env?.VITE_APP_API_BASE_URL)
-  || (typeof window !== "undefined" && window.__API_BASE__)
-  || "http://localhost:10000";
-
-function getContentType(res) {
-  return (res.headers?.get?.("content-type") || "").toLowerCase();
-}
-
-async function parseResponse(res) {
-  const ct = getContentType(res);
-  let body;
-  try {
-    if (ct.includes("application/json")) {
-      body = await res.json();
-    } else if (ct.includes("text/")) {
-      body = await res.text();
-    } else {
-      body = await res.arrayBuffer();
-    }
-  } catch (e) {
-    body = "<unparseable body>";
-  }
-
-  if (!res.ok) {
-    const preview = typeof body === "string" ? body.slice(0, 280) : (typeof body === "object" ? JSON.stringify(body).slice(0, 280) : `[${ct}] ${String(body).slice(0, 100)}`);
-    throw new Error(`${res.status} ${res.statusText} — ${preview}`);
-  }
-  return body;
-}
+const API_BASE = import.meta?.env?.VITE_APP_API_BASE_URL || "http://localhost:10000";
 
 async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`, { credentials: "omit" });
-  return parseResponse(res);
+  const res = await fetch(`${API_BASE}${path}`);
+  return res.json().catch(() => []);
 }
 
 async function apiPostForm(path, formData) {
-  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: formData, credentials: "omit" });
-  return parseResponse(res);
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: formData });
+  return res.json().catch(() => ({}));
 }
 
 // ==========================
-// Componente principal
+// Componentes de páginas
 // ==========================
-export default function App() {
+function Home() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: "", price: "", image: "", description: "", file: null });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState("");
 
-  // Productos demo para mostrar si el backend está vacío
   const demoProducts = [
     { id: "demo1", name: "Camisa de algodón", price: 250, description: "Comodidad y estilo", image: "https://via.placeholder.com/320x200?text=Camisa" },
     { id: "demo2", name: "Zapatos deportivos", price: 600, description: "Ideales para correr", image: "https://via.placeholder.com/320x200?text=Zapatos" },
@@ -64,18 +33,8 @@ export default function App() {
   async function load() {
     try {
       const data = await apiGet("/api/products");
-      if (!Array.isArray(data)) {
-        console.warn("/api/products no devolvió un array. Respuesta:", data);
-        setProducts([]);
-        setNotice(typeof data === "string" ? data.slice(0, 160) : "Respuesta inesperada del servidor.");
-      } else {
-        setProducts(data);
-        setNotice("");
-      }
-      setError("");
-    } catch (e) {
-      console.error("[LOAD]", e);
-      setError("Error al conectar con backend ❌");
+      setProducts(Array.isArray(data) ? data : []);
+    } catch {
       setProducts([]);
     } finally {
       setLoading(false);
@@ -92,45 +51,35 @@ export default function App() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    try {
-      const fd = new FormData();
-      fd.append("name", form.name);
-      fd.append("price", form.price);
-      fd.append("description", form.description);
-      if (form.image) fd.append("image", form.image);
-      if (form.file) fd.append("file", form.file);
+    const fd = new FormData();
+    fd.append("name", form.name);
+    fd.append("price", form.price);
+    fd.append("description", form.description);
+    if (form.image) fd.append("image", form.image);
+    if (form.file) fd.append("file", form.file);
 
-      const result = await apiPostForm("/api/products", fd);
-      const msg = typeof result === "string" ? result : (result?.name ? `Creado: ${result.name}` : "Creado correctamente");
-      setNotice(msg);
-      setForm({ name: "", price: "", image: "", description: "", file: null });
-      await load();
-    } catch (e) {
-      console.error("[CREATE]", e);
-      alert(`No se pudo crear el producto: ${e.message}`);
-    }
+    await apiPostForm("/api/products", fd);
+    setForm({ name: "", price: "", image: "", description: "", file: null });
+    load();
   }
 
   return (
-    <div style={{ fontFamily: "Arial", margin: 20 }}>
-      <h1 style={{ textAlign: "center" }}>LibreMercado</h1>
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-      {notice && !error && <p style={{ color: "green", textAlign: "center" }}>{notice}</p>}
-
+    <div>
+      <h2>Inicio</h2>
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 480, margin: "20px auto" }}>
         <input name="name" placeholder="Nombre" value={form.name} onChange={onChange} required />
-        <input name="price" type="number" min="0" placeholder="Precio" value={form.price} onChange={onChange} required />
-        <input name="image" placeholder="URL de imagen (opcional)" value={form.image} onChange={onChange} />
+        <input name="price" type="number" placeholder="Precio" value={form.price} onChange={onChange} required />
+        <input name="image" placeholder="URL de imagen" value={form.image} onChange={onChange} />
         <input type="file" accept="image/*" onChange={onChange} />
         <textarea name="description" placeholder="Descripción" value={form.description} onChange={onChange} />
         <button type="submit">Crear producto</button>
       </form>
 
-      {loading ? <p style={{ textAlign: "center" }}>Cargando…</p> : (
+      {loading ? <p>Cargando…</p> : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 16 }}>
           {(products.length > 0 ? products : demoProducts).map(p => (
             <div key={p._id || p.id} style={{ border: "1px solid #ccc", borderRadius: 8, padding: 10 }}>
-              <img src={p.image || "https://via.placeholder.com/320x200?text=Producto"} alt={p.name} style={{ width: "100%", borderRadius: 6 }} />
+              <img src={p.image} alt={p.name} style={{ width: "100%", borderRadius: 6 }} />
               <h3>{p.name}</h3>
               <p>{p.description}</p>
               <strong>${p.price}</strong>
@@ -139,5 +88,61 @@ export default function App() {
         </div>
       )}
     </div>
+  );
+}
+
+function Sell() {
+  return <h2>Pantalla de Vender (formulario pronto aquí)</h2>;
+}
+
+function Login() {
+  return (
+    <div>
+      <h2>Iniciar Sesión</h2>
+      <form style={{ display: "grid", gap: 8, maxWidth: 300, margin: "20px auto" }}>
+        <input placeholder="Email" type="email" required />
+        <input placeholder="Contraseña" type="password" required />
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+  );
+}
+
+function Register() {
+  return (
+    <div>
+      <h2>Registrarse</h2>
+      <form style={{ display: "grid", gap: 8, maxWidth: 300, margin: "20px auto" }}>
+        <input placeholder="Nombre" required />
+        <input placeholder="Email" type="email" required />
+        <input placeholder="Contraseña" type="password" required />
+        <button type="submit">Crear cuenta</button>
+      </form>
+    </div>
+  );
+}
+
+// ==========================
+// App principal con Router
+// ==========================
+export default function App() {
+  return (
+    <Router>
+      <div style={{ fontFamily: "Arial", margin: 20 }}>
+        <nav style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 20 }}>
+          <Link to="/">Inicio</Link>
+          <Link to="/vender">Vender</Link>
+          <Link to="/login">Login</Link>
+          <Link to="/register">Registrarse</Link>
+        </nav>
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/vender" element={<Sell />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
