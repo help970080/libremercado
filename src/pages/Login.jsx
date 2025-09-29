@@ -3,32 +3,40 @@ import { useState } from "react";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        alert(`Bienvenido ${data.name}`);
+        localStorage.setItem("username", data.name);
+        setMessage("✅ Bienvenido " + data.name);
       } else {
-        alert(data.error);
+        setMessage("❌ " + (data.error || "Error al iniciar sesión"));
       }
     } catch {
-      alert("Error en login");
+      setMessage("❌ Error de conexión con el servidor");
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-sm mx-auto p-4 bg-white shadow rounded grid gap-3">
-      <input className="border p-2 rounded" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <input className="border p-2 rounded" type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      <button className="bg-green-600 text-white p-2 rounded hover:bg-green-700" type="submit">Entrar</button>
-    </form>
+    <div className="flex justify-center items-center min-h-[70vh]">
+      <div className="bg-white p-8 rounded-lg shadow w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Iniciar sesión</h2>
+        {message && <p className="mb-4 text-center">{message}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input className="w-full border rounded p-2" placeholder="Correo" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+          <input className="w-full border rounded p-2" placeholder="Contraseña" type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Entrar</button>
+        </form>
+      </div>
+    </div>
   );
 }

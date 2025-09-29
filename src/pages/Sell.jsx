@@ -1,59 +1,56 @@
 import { useState } from "react";
 
 export default function Sell() {
-  const [form, setForm] = useState({ name: "", price: "", description: "", image: "", file: null });
+  const [form, setForm] = useState({ name: "", price: "", description: "", image: "" });
+  const [message, setMessage] = useState("");
 
-  // Verificar si el usuario está logueado
-  const token = localStorage.getItem("token");
-  if (!token) {
-    return <p className="text-center text-red-600 mt-10">Debes iniciar sesión para vender productos</p>;
-  }
-
-  const onChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) setForm({ ...form, file: files[0] });
-    else setForm({ ...form, [name]: value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  async function onSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const fd = new FormData();
-      fd.append("name", form.name);
-      fd.append("price", form.price);
-      fd.append("description", form.description);
-      if (form.image) fd.append("image", form.image);
-      if (form.file) fd.append("file", form.file);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setMessage("❌ Debes iniciar sesión para publicar");
+        return;
+      }
 
       const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/api/products`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` }, // Token en header
-        body: fd,
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(form)
       });
 
       const data = await res.json();
       if (res.ok) {
-        alert("Producto publicado ✅");
-        setForm({ name: "", price: "", description: "", image: "", file: null });
+        setMessage("✅ Producto publicado");
+        setForm({ name: "", price: "", description: "", image: "" });
       } else {
-        alert(data.error || "Error al publicar producto");
+        setMessage("❌ " + (data.error || "Error al publicar producto"));
       }
     } catch {
-      alert("Error de red al publicar producto");
+      setMessage("❌ Error de conexión con el servidor");
     }
-  }
+  };
 
   return (
-    <div className="max-w-md mx-auto bg-white shadow rounded p-4">
-      <h2 className="text-xl font-bold mb-4 text-center">Publicar producto</h2>
-      <form onSubmit={onSubmit} className="grid gap-3">
-        <input className="border p-2 rounded" name="name" placeholder="Nombre" value={form.name} onChange={onChange} required />
-        <input className="border p-2 rounded" type="number" name="price" placeholder="Precio" value={form.price} onChange={onChange} required />
-        <textarea className="border p-2 rounded" name="description" placeholder="Descripción" value={form.description} onChange={onChange} />
-        <input className="border p-2 rounded" name="image" placeholder="URL de imagen (opcional)" value={form.image} onChange={onChange} />
-        <input className="border p-2 rounded" type="file" accept="image/*" onChange={onChange} />
-        <button className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700" type="submit">Publicar</button>
-      </form>
+    <div className="flex justify-center items-center min-h-[70vh]">
+      <div className="bg-white p-8 rounded-lg shadow w-full max-w-lg">
+        <h2 className="text-2xl font-bold mb-6 text-center">Publicar un producto</h2>
+        {message && <p className="mb-4 text-center">{message}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input className="w-full border rounded p-2" name="name" placeholder="Nombre" value={form.name} onChange={handleChange} required />
+          <input className="w-full border rounded p-2" name="price" type="number" placeholder="Precio" value={form.price} onChange={handleChange} required />
+          <input className="w-full border rounded p-2" name="image" placeholder="URL de imagen" value={form.image} onChange={handleChange} />
+          <textarea className="w-full border rounded p-2" name="description" placeholder="Descripción" value={form.description} onChange={handleChange} />
+          <button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Crear producto</button>
+        </form>
+      </div>
     </div>
   );
 }

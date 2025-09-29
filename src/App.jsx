@@ -1,148 +1,82 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import HomePage from "./pages/HomePage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Sell from "./pages/Sell";
 
-// ==========================
-// API Client (igual que antes)
-// ==========================
-const API_BASE = import.meta?.env?.VITE_APP_API_BASE_URL || "http://localhost:10000";
-
-async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`);
-  return res.json().catch(() => []);
+// 🔒 Ruta protegida
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/login" />;
 }
 
-async function apiPostForm(path, formData) {
-  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: formData });
-  return res.json().catch(() => ({}));
-}
+export default function App() {
+  const [user, setUser] = useState(localStorage.getItem("username") || null);
+  const navigate = useNavigate();
 
-// ==========================
-// Componentes de páginas
-// ==========================
-function Home() {
-  const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: "", price: "", image: "", description: "", file: null });
-  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setUser(localStorage.getItem("username"));
+  }, []);
 
-  const demoProducts = [
-    { id: "demo1", name: "Camisa de algodón", price: 250, description: "Comodidad y estilo", image: "https://via.placeholder.com/320x200?text=Camisa" },
-    { id: "demo2", name: "Zapatos deportivos", price: 600, description: "Ideales para correr", image: "https://via.placeholder.com/320x200?text=Zapatos" },
-    { id: "demo3", name: "Smartwatch", price: 1200, description: "Tecnología en tu muñeca", image: "https://via.placeholder.com/320x200?text=Reloj" }
-  ];
-
-  async function load() {
-    try {
-      const data = await apiGet("/api/products");
-      setProducts(Array.isArray(data) ? data : []);
-    } catch {
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { load(); }, []);
-
-  const onChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) setForm({ ...form, file: files[0] });
-    else setForm({ ...form, [name]: value });
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUser(null);
+    navigate("/login");
   };
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    const fd = new FormData();
-    fd.append("name", form.name);
-    fd.append("price", form.price);
-    fd.append("description", form.description);
-    if (form.image) fd.append("image", form.image);
-    if (form.file) fd.append("file", form.file);
-
-    await apiPostForm("/api/products", fd);
-    setForm({ name: "", price: "", image: "", description: "", file: null });
-    load();
-  }
-
   return (
-    <div>
-      <h2>Inicio</h2>
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 480, margin: "20px auto" }}>
-        <input name="name" placeholder="Nombre" value={form.name} onChange={onChange} required />
-        <input name="price" type="number" placeholder="Precio" value={form.price} onChange={onChange} required />
-        <input name="image" placeholder="URL de imagen" value={form.image} onChange={onChange} />
-        <input type="file" accept="image/*" onChange={onChange} />
-        <textarea name="description" placeholder="Descripción" value={form.description} onChange={onChange} />
-        <button type="submit">Crear producto</button>
-      </form>
+    <div className="font-sans min-h-screen bg-gray-50 text-gray-800">
+      {/* NAVBAR */}
+      <nav className="bg-blue-600 text-white shadow sticky top-0 z-50">
+        <div className="container mx-auto flex justify-between items-center px-6 py-3">
+          <h1 className="text-xl font-bold">LibreMercado</h1>
+          <div className="flex gap-6 items-center">
+            <NavLink className="hover:underline" to="/">Inicio</NavLink>
+            <NavLink className="hover:underline" to="/vender">Vender</NavLink>
 
-      {loading ? <p>Cargando…</p> : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 16 }}>
-          {(products.length > 0 ? products : demoProducts).map(p => (
-            <div key={p._id || p.id} style={{ border: "1px solid #ccc", borderRadius: 8, padding: 10 }}>
-              <img src={p.image} alt={p.name} style={{ width: "100%", borderRadius: 6 }} />
-              <h3>{p.name}</h3>
-              <p>{p.description}</p>
-              <strong>${p.price}</strong>
-            </div>
-          ))}
+            {!user ? (
+              <>
+                <NavLink className="hover:underline" to="/login">Login</NavLink>
+                <NavLink className="hover:underline" to="/register">Registrarse</NavLink>
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">👋 Hola, {user}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+                >
+                  Cerrar sesión
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  );
-}
+      </nav>
 
-function Sell() {
-  return <h2>Pantalla de Vender (formulario pronto aquí)</h2>;
-}
-
-function Login() {
-  return (
-    <div>
-      <h2>Iniciar Sesión</h2>
-      <form style={{ display: "grid", gap: 8, maxWidth: 300, margin: "20px auto" }}>
-        <input placeholder="Email" type="email" required />
-        <input placeholder="Contraseña" type="password" required />
-        <button type="submit">Entrar</button>
-      </form>
-    </div>
-  );
-}
-
-function Register() {
-  return (
-    <div>
-      <h2>Registrarse</h2>
-      <form style={{ display: "grid", gap: 8, maxWidth: 300, margin: "20px auto" }}>
-        <input placeholder="Nombre" required />
-        <input placeholder="Email" type="email" required />
-        <input placeholder="Contraseña" type="password" required />
-        <button type="submit">Crear cuenta</button>
-      </form>
-    </div>
-  );
-}
-
-// ==========================
-// App principal con Router
-// ==========================
-export default function App() {
-  return (
-    <Router>
-      <div style={{ fontFamily: "Arial", margin: 20 }}>
-        <nav style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 20 }}>
-          <Link to="/">Inicio</Link>
-          <Link to="/vender">Vender</Link>
-          <Link to="/login">Login</Link>
-          <Link to="/register">Registrarse</Link>
-        </nav>
-
+      {/* CONTENIDO */}
+      <main className="container mx-auto px-6 py-8">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/vender" element={<Sell />} />
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/vender"
+            element={
+              <PrivateRoute>
+                <Sell />
+              </PrivateRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>
-      </div>
-    </Router>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="bg-gray-100 text-center text-sm py-4 border-t mt-10 text-gray-500">
+        © {new Date().getFullYear()} LibreMercado. Todos los derechos reservados.
+      </footer>
+    </div>
   );
 }
