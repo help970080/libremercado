@@ -1,65 +1,41 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { io } from "socket.io-client";
-
-const API_URL = import.meta.env.VITE_API_URL.replace("/api", ""); // apunta al backend
-let socket;
+import { useState, useEffect } from "react";
 
 export default function ChatPage() {
-  const { id } = useParams(); // id del usuario con el que chatear
-  const [messages, setMessages] = useState([]);
-  const [msg, setMsg] = useState("");
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("chatMessages");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [input, setInput] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Inicia sesión");
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
+  }, [messages]);
 
-    // Decodificar JWT para obtener userId
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const userId = payload.id;
-
-    socket = io(API_URL, { auth: { userId } });
-
-    socket.emit("conversation:join", { peerId: id });
-
-    socket.on("conversation:ready", ({ id: convoId }) => {
-      socket.on("message:new", (m) => {
-        setMessages((prev) => [...prev, m]);
-      });
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [id]);
-
-  const send = () => {
-    if (!msg) return;
-    socket.emit("message:send", { conversationId: id, body: msg });
-    setMsg("");
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    const newMsg = { id: Date.now(), text: input };
+    setMessages([...messages, newMsg]);
+    setInput("");
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Chat</h1>
-      <div className="border p-4 h-64 overflow-y-scroll bg-white mb-4">
-        {messages.map((m, i) => (
-          <div key={i} className="mb-2">
-            <span className="font-semibold">{m.from}</span>: {m.body}
+    <div>
+      <h2 className="text-xl font-bold mb-4">Chat Simulado</h2>
+      <div className="border p-4 h-64 overflow-y-auto bg-gray-100">
+        {messages.map((m) => (
+          <div key={m.id} className="mb-2">
+            <span className="bg-blue-200 px-2 py-1 rounded">{m.text}</span>
           </div>
         ))}
       </div>
-      <div className="flex space-x-2">
+      <div className="mt-4 flex gap-2">
         <input
-          value={msg}
-          onChange={(e) => setMsg(e.target.value)}
-          placeholder="Escribe un mensaje..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           className="border p-2 flex-1"
+          placeholder="Escribe un mensaje..."
         />
-        <button
-          onClick={send}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
+        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">
           Enviar
         </button>
       </div>
