@@ -3,12 +3,17 @@ import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Navbar from "./components/Navbar";
 
+// Páginas
 import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import SellPage from "./pages/SellPage";
-import ProfilePage from "./pages/ProfilePage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Sell from "./pages/Sell";
+import Profile from "./pages/Profile";
 import ChatPage from "./pages/ChatPage";
+import CartPage from "./pages/CartPage";
+import MembershipPage from "./pages/MembershipPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import PublishPage from "./pages/PublishPage";
 
 import "./index.css";
 
@@ -21,15 +26,17 @@ export default function App() {
           <Routes>
             {/* Rutas públicas */}
             <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/membership" element={<MembershipPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
 
             {/* Rutas privadas */}
             <Route
               path="/sell"
               element={
                 <PrivateRoute>
-                  <SellPage />
+                  <Sell />
                 </PrivateRoute>
               }
             />
@@ -37,7 +44,7 @@ export default function App() {
               path="/profile"
               element={
                 <PrivateRoute>
-                  <ProfilePage />
+                  <Profile />
                 </PrivateRoute>
               }
             />
@@ -46,6 +53,22 @@ export default function App() {
               element={
                 <PrivateRoute>
                   <ChatPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <PrivateRoute>
+                  <CartPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/publish"
+              element={
+                <PrivateRoute>
+                  <PublishPage />
                 </PrivateRoute>
               }
             />
