@@ -1,60 +1,19 @@
-import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import HomePage from "./pages/HomePage.jsx";
-import ProductDetailPage from "./pages/ProductDetailPage.jsx";
-import PublishPage from "./pages/PublishPage.jsx";
-import CartPage from "./pages/CartPage.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import MembershipPage from "./pages/MembershipPage.jsx";
-import ChatPage from "./pages/ChatPage.jsx";
-import PrivateRoute from "./components/PrivateRoute.jsx"; // 🔒 nuevo
+import React, { useEffect, useState } from "react";
+import api from "./services/api";
 
 function App() {
-  return (
-    <div>
-      <Navbar />
-      <Routes>
-        {/* Públicas */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/product/:id" element={<ProductDetailPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+  const [message, setMessage] = useState("Cargando...");
 
-        {/* Protegidas */}
-        <Route
-          path="/publish"
-          element={
-            <PrivateRoute>
-              <PublishPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <PrivateRoute>
-              <CartPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/membership"
-          element={
-            <PrivateRoute>
-              <MembershipPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/chat/:id"
-          element={
-            <PrivateRoute>
-              <ChatPage />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
+  useEffect(() => {
+    api.get("/api/products")
+      .then(res => setMessage("Conexión exitosa con backend 🚀"))
+      .catch(() => setMessage("Error al conectar con backend ❌"));
+  }, []);
+
+  return (
+    <div style={{ fontFamily: "Arial", textAlign: "center", marginTop: "50px" }}>
+      <h1>LibreMercado</h1>
+      <p>{message}</p>
     </div>
   );
 }
