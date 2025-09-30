@@ -1,7 +1,11 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";   // ✅ CORREGIDO
+
+// ✅ Navbar está en components
+import Navbar from "./components/Navbar.jsx";
+
+// ✅ Páginas en pages
 import HomePage from "./pages/HomePage.jsx";
 import PublishPage from "./pages/PublishPage.jsx";
 import Login from "./pages/Login.jsx";
@@ -11,8 +15,12 @@ import MembershipPage from "./pages/MembershipPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
+
+// ✅ PrivateRoute está en src/
 import PrivateRoute from "./PrivateRoute.jsx";
-import { AuthProvider } from "./AuthContext.jsx";
+
+// ✅ AuthContext está en context
+import { AuthProvider } from "./context/AuthContext.jsx";
 
 function App() {
   return (
