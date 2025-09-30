@@ -1,98 +1,62 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import api from "../services/api";
+// src/pages/ProductDetailPage.jsx
+import React, { useEffect, useState, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../axios.js";
+import { AuthContext } from "../AuthContext.jsx";
 
-export default function ProductDetailPage() {
+function ProductDetailPage() {
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [newQ, setNewQ] = useState("");
-  const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    (async () => {
+    const fetchProduct = async () => {
       try {
-        const resP = await api.get(`/api/products/${id}`);
-        setProduct(resP.data);
-        const resQ = await api.get(`/api/questions/product/${id}`);
-        setQuestions(resQ.data);
-      } catch (e) {
-        console.error("Error cargando detalle:", e);
-        setMsg("No se pudo cargar el producto.");
+        const res = await api.get(`/products/${id}`);
+        setProduct(res.data);
+      } catch (err) {
+        console.error("Error cargando producto", err);
       }
-    })();
+    };
+    fetchProduct();
   }, [id]);
 
-  const ask = async () => {
-    if (!newQ.trim()) return;
+  const handleContact = async () => {
+    if (!user) {
+      return navigate("/login");
+    }
+    if (!user.membershipActive) {
+      return navigate("/membership");
+    }
     try {
-      const res = await api.post(`/api/questions/product/${id}`, { text: newQ });
-      setQuestions([res.data, ...questions]);
-      setNewQ("");
-    } catch {
-      setMsg("❌ Debes iniciar sesión para preguntar.");
+      const res = await api.post("/conversations", { sellerId: product.user });
+      navigate(`/chat/${res.data._id}`);
+    } catch (err) {
+      console.error("Error iniciando chat", err);
     }
   };
 
-  const addToCart = async () => {
-    try {
-      await api.post("/api/cart", { productId: id, quantity: 1 });
-      setMsg("✅ Producto agregado al carrito");
-    } catch {
-      setMsg("❌ Error al agregar al carrito");
-    }
-  };
-
-  if (!product) return <p className="p-6">Cargando...</p>;
+  if (!product) return <div className="p-6">Cargando...</div>;
 
   return (
-    <div className="p-6">
-      {msg && <p className="mb-3 text-blue-700">{msg}</p>}
-      {product.image && (
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full max-h-80 object-cover rounded"
-        />
-      )}
-      <h1 className="text-2xl font-bold mt-4">{product.name}</h1>
-      <p className="text-lg">${product.price}</p>
-      <p className="mt-2">{product.description}</p>
-
+    <div className="p-6 max-w-3xl mx-auto">
+      <img
+        src={product.image}
+        alt={product.name}
+        className="w-full max-h-96 object-cover mb-4 rounded-lg"
+      />
+      <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+      <p className="text-gray-700 mb-4">{product.description}</p>
+      <p className="text-green-600 font-bold text-xl mb-6">${product.price}</p>
       <button
-        onClick={addToCart}
-        className="bg-green-600 text-white px-4 py-2 mt-4 rounded"
+        onClick={handleContact}
+        className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
       >
-        Agregar al carrito
+        Contactar al vendedor
       </button>
-
-      <div className="mt-6">
-        <h2 className="font-semibold">Preguntas y respuestas</h2>
-        <input
-          value={newQ}
-          onChange={(e) => setNewQ(e.target.value)}
-          placeholder="Haz una pregunta..."
-          className="border p-2 w-full mt-2"
-        />
-        <button
-          onClick={ask}
-          className="bg-blue-600 text-white px-4 py-2 mt-2 rounded"
-        >
-          Preguntar
-        </button>
-        <ul className="mt-4">
-          {questions.map((q) => (
-            <li key={q._id} className="border-b py-2">
-              <p>
-                <strong>{q.fromUser?.name}:</strong> {q.text}
-              </p>
-              {q.answer && (
-                <p className="text-green-700">Respuesta: {q.answer}</p>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }
+
+export default ProductDetailPage;

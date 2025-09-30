@@ -1,31 +1,57 @@
-import api from "../services/api";
+// src/pages/MembershipPage.jsx
+import React, { useContext, useState } from "react";
+import { AuthContext } from "../AuthContext.jsx";
+import api from "../axios.js";
 
-export default function MembershipPage() {
-  const subscribe = async (priceId) => {
+function MembershipPage() {
+  const { user } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubscribe = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await api.post("/membership/create-checkout-session", {
-        priceId,
-      });
-      window.location.href = res.data.url;
+      const res = await api.post("/membership/checkout");
+      if (res.data?.url) {
+        window.location.href = res.data.url; // Redirige a Stripe Checkout
+      } else {
+        setError("No se pudo iniciar el proceso de pago.");
+      }
     } catch (err) {
-      alert("Error al crear sesión de Stripe");
+      console.error(err);
+      setError("Error al conectar con el servidor.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Membresías</h1>
-      <div className="space-y-4">
-        <div className="p-4 border rounded bg-white">
-          <h2 className="font-semibold">Pro - $9.99/mes</h2>
-          <button
-            onClick={() => subscribe("price_123")} // 🔑 cambia por tu priceId real
-            className="bg-blue-600 text-white px-4 py-2 mt-2 rounded"
-          >
-            Suscribirse
-          </button>
-        </div>
+  if (!user) {
+    return (
+      <div className="p-6 text-center">
+        <h2 className="text-2xl font-bold mb-4">Membresía</h2>
+        <p className="mb-4">
+          Debes iniciar sesión para adquirir una membresía.
+        </p>
       </div>
+    );
+  }
+
+  return (
+    <div className="p-6 text-center">
+      <h2 className="text-2xl font-bold mb-4">Membresía Premium</h2>
+      <p className="mb-6">Accede a beneficios exclusivos como vendedor.</p>
+      <button
+        onClick={handleSubscribe}
+        disabled={loading}
+        className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+      >
+        {loading ? "Procesando..." : "Suscribirme"}
+      </button>
+      {error && <p className="mt-4 text-red-500">{error}</p>}
     </div>
   );
 }
+
+export default MembershipPage;
