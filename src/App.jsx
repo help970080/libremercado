@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./Navbar.jsx";
+import Navbar from "./components/Navbar.jsx";   // ✅ CORREGIDO
 import HomePage from "./pages/HomePage.jsx";
 import PublishPage from "./pages/PublishPage.jsx";
 import Login from "./pages/Login.jsx";
