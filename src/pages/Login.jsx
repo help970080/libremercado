@@ -1,41 +1,42 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.name);
-        setMessage("✅ Bienvenido " + data.name);
-      } else {
-        setMessage("❌ " + (data.error || "Error al iniciar sesión"));
-      }
-    } catch {
-      setMessage("❌ Error de conexión con el servidor");
+      const { data } = await api.post("/api/auth/login", form);
+      login({ token: data.token, name: data.name, email: data.email });
+      navigate("/profile");
+    } catch (err) {
+      console.error(err);
+      setError("Credenciales inválidas o servidor no disponible");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[70vh]">
-      <div className="bg-white p-8 rounded-lg shadow w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Iniciar sesión</h2>
-        {message && <p className="mb-4 text-center">{message}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input className="w-full border rounded p-2" placeholder="Correo" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
-          <input className="w-full border rounded p-2" placeholder="Contraseña" type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Entrar</button>
+    <div className="container py-8">
+      <div className="max-w-md mx-auto card p-6">
+        <h2 className="text-2xl font-bold mb-4">Iniciar sesión</h2>
+        {error && <p className="text-red-600 mb-2">{error}</p>}
+        <form onSubmit={onSubmit} className="grid gap-3">
+          <input className="input" type="email" name="email" placeholder="Correo" value={form.email} onChange={onChange} required />
+          <input className="input" type="password" name="password" placeholder="Contraseña" value={form.password} onChange={onChange} required />
+          <button className="btn-primary" type="submit">Entrar</button>
         </form>
+        <p className="text-sm text-gray-600 mt-3">
+          ¿No tienes cuenta? <Link to="/register" className="text-blue-700 font-medium">Regístrate</Link>
+        </p>
       </div>
     </div>
   );
