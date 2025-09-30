@@ -1,12 +1,12 @@
 // src/pages/ChatPage.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from "../axios.js";
-import { AuthContext } from "../AuthContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function ChatPage() {
-  const { id } = useParams(); // conversationId
-  const { user } = useContext(AuthContext);
+  const { id } = useParams();
+  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
 

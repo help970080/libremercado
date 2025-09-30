@@ -1,12 +1,12 @@
 // src/pages/ProductDetailPage.jsx
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../axios.js";
-import { AuthContext } from "../AuthContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function ProductDetailPage() {
   const { id } = useParams();
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
 
@@ -23,12 +23,9 @@ function ProductDetailPage() {
   }, [id]);
 
   const handleContact = async () => {
-    if (!user) {
-      return navigate("/login");
-    }
-    if (!user.membershipActive) {
-      return navigate("/membership");
-    }
+    if (!user) return navigate("/login");
+    if (!user.membershipActive) return navigate("/membership");
+
     try {
       const res = await api.post("/conversations", { sellerId: product.user });
       navigate(`/chat/${res.data._id}`);

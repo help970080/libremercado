@@ -1,17 +1,17 @@
 // src/PrivateRoute.jsx
-import React, { useContext } from "react";
+import React from "react";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "./AuthContext.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
 
 function PrivateRoute({ children, restricted = false }) {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   if (restricted && !user.membershipActive) {
-    return <Navigate to="/membership" />;
+    return <Navigate to="/membership" replace />;
   }
 
   return children;

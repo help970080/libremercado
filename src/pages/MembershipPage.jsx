@@ -1,21 +1,20 @@
 // src/pages/MembershipPage.jsx
-import React, { useContext, useState } from "react";
-import { AuthContext } from "../AuthContext.jsx";
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext.jsx";
 import api from "../axios.js";
 
 function MembershipPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubscribe = async () => {
     setLoading(true);
     setError("");
-
     try {
       const res = await api.post("/membership/checkout");
       if (res.data?.url) {
-        window.location.href = res.data.url; // Redirige a Stripe Checkout
+        window.location.href = res.data.url;
       } else {
         setError("No se pudo iniciar el proceso de pago.");
       }
@@ -31,9 +30,7 @@ function MembershipPage() {
     return (
       <div className="p-6 text-center">
         <h2 className="text-2xl font-bold mb-4">Membresía</h2>
-        <p className="mb-4">
-          Debes iniciar sesión para adquirir una membresía.
-        </p>
+        <p>Debes iniciar sesión para adquirir una membresía.</p>
       </div>
     );
   }

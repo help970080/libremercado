@@ -9,6 +9,7 @@ function PublishPage() {
   const [file, setFile] = useState(null);
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +18,7 @@ function PublishPage() {
       formData.append("name", name);
       formData.append("description", description);
       formData.append("price", price);
-      formData.append("file", file);
+      if (file) formData.append("file", file);
       formData.append("location[state]", state);
       formData.append("location[city]", city);
 
@@ -25,7 +26,7 @@ function PublishPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Producto publicado con éxito 🚀");
+      setMessage("✅ Producto publicado con éxito 🚀");
       setName("");
       setDescription("");
       setPrice("");
@@ -34,13 +35,22 @@ function PublishPage() {
       setCity("");
     } catch (err) {
       console.error("Error publicando producto", err);
-      alert("Error al publicar producto");
+      setMessage("❌ Error al publicar producto");
     }
   };
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">Publicar producto</h2>
+      {message && (
+        <p
+          className={`mb-4 ${
+            message.startsWith("✅") ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {message}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -120,7 +130,7 @@ function PublishPage() {
 
         <button
           type="submit"
-          className="bg-indigo-600 text-white px-4 py-2 rounded"
+          className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
         >
           Publicar
         </button>
