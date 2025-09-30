@@ -14,13 +14,14 @@ export default function PublishPage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) { setMsg("Debes iniciar sesión para publicar."); return; }
+
       if (file) {
         const fd = new FormData();
         Object.entries(form).forEach(([k, v]) => fd.append(k, v));
         fd.append("file", file);
-        await apiPostForm("/api/products", fd, { headers: { Authorization: "Bearer " + token } });
+        await apiPostForm("/api/products", fd);
       } else {
-        await api.post("/api/products", form, { headers: { Authorization: "Bearer " + token } });
+        await api.post("/api/products", form);
       }
       setMsg("Producto publicado ✅");
       setForm({ name: "", price: "", description: "", image: "" }); setFile(null);

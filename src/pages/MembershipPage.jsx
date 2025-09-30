@@ -1,4 +1,4 @@
-import api from "../api/axios";
+import api from "../services/api";
 
 export default function MembershipPage() {
   const subscribe = async (priceId) => {
@@ -19,7 +19,7 @@ export default function MembershipPage() {
         <div className="p-4 border rounded bg-white">
           <h2 className="font-semibold">Pro - $9.99/mes</h2>
           <button
-            onClick={() => subscribe("price_123")} // tu priceId real
+            onClick={() => subscribe("price_123")} // 🔑 cambia por tu priceId real
             className="bg-blue-600 text-white px-4 py-2 mt-2 rounded"
           >
             Suscribirse

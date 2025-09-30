@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api from "../services/api";
 
 export default function CartPage() {
   const [cart, setCart] = useState(null);
 
   useEffect(() => {
-    api.get("/cart").then((res) => setCart(res.data));
+    api.get("/api/cart").then((res) => setCart(res.data)).catch(()=>setCart(null));
   }, []);
 
-  if (!cart) return <p className="p-6">Carrito vacío o no logueado.</p>;
+  if (!cart || !cart.items?.length) return <p className="p-6">Carrito vacío o no logueado.</p>;
 
   return (
     <div className="p-6">
